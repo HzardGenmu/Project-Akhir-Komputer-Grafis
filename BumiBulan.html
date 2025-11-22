@@ -40,13 +40,13 @@
         // Texture Loader
         const textureLoader = new THREE.TextureLoader();
 
+        //JANGAN DIUBAH
         // Matahari (dengan tekstur dari folder texture)
         const sunGeo = new THREE.SphereGeometry(5, 32, 32);
         const sunTexture = textureLoader.load('./texture/matahari.png');
         const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture });
         const sun = new THREE.Mesh(sunGeo, sunMat);
         scene.add(sun);
-
 
         // Cahaya (Pusat di matahari)
         const light = new THREE.PointLight(0xffffff, 1000, 0);
@@ -55,12 +55,15 @@
         const ambientLight = new THREE.AmbientLight(0x404040); 
         scene.add(ambientLight);
 
-        // Bumi
+         //JANGAN DIUBAH
+        // Bumi (dengan tekstur dari URL)
         const earthGeo = new THREE.SphereGeometry(2, 32, 32);
-        const earthMat = new THREE.MeshStandardMaterial({ color: 0x2233ff });
+        const earthTexture = textureLoader.load('./texture/bumi.jpg');
+        const earthMat = new THREE.MeshStandardMaterial({ map: earthTexture });
         const earth = new THREE.Mesh(earthGeo, earthMat);
         scene.add(earth);
 
+         //JANGAN DIUBAH
         // Bulan
         const moonGeo = new THREE.SphereGeometry(0.5, 32, 32);
         const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
