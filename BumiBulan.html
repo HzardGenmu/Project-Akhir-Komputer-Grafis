@@ -5,8 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tata Surya Three.js (Fixed)</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: black; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: black; 
+            font-family: sans-serif;
+            color: white;
+        }
         canvas { display: block; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 14px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            user-select: none;
+            backdrop-filter: blur(5px);
+            max-width: 220px;
+        }
+        #controls h3 {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+        }
+        #controls label { font-size: 0.9em; margin-bottom: 5px; display: block; }
+        #controls input[type="range"] { width: 160px; cursor: pointer; }
+        .note { font-size: 0.75em; color: #aaa; margin-top: 5px; line-height: 1.3; }
     </style>
     <script type="importmap">
         {
@@ -18,6 +45,18 @@
     </script>
 </head>
 <body>
+    <div id="controls">
+        <h3>Kontrol Tata Surya</h3>
+        <div>
+            <label for="revolutionSpeed">Kecepatan Revolusi (Orbit)</label>
+            <input type="range" id="revolutionSpeed" min="0" max="5" value="1" step="0.1">
+        </div>
+        <div>
+            <label for="rotationSpeed">Kecepatan Rotasi Planet</label>
+            <input type="range" id="rotationSpeed" min="0" max="5" value="1" step="0.1">
+        </div>
+        <div class="note">*Skala ukuran dan jarak tidak 100% akurat agar semua planet bisa terlihat dalam satu layar.</div>
+    </div>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -29,6 +68,7 @@
         
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -36,6 +76,10 @@
         
         camera.position.set(0, 60, 100);
         controls.update();
+
+        // Slider untuk mengatur kecepatan
+        const revolutionSpeedInput = document.getElementById('revolutionSpeed');
+        const rotationSpeedInput = document.getElementById('rotationSpeed');
 
         // --- OBJEK ---
         // Texture Loader
@@ -51,6 +95,10 @@
 
         // Cahaya (Pusat di matahari)
         const light = new THREE.PointLight(0xffffff, 1000, 0);
+        light.castShadow = true;
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        light.shadow.bias = -0.0001;
         sun.add(light);
         // Tambahkan cahaya ambient agar sisi gelap tidak hitam pekat
         const ambientLight = new THREE.AmbientLight(0x404040); 
@@ -62,6 +110,8 @@
         const earthTexture = textureLoader.load('./texture/bumi.jpg');
         const earthMat = new THREE.MeshStandardMaterial({ map: earthTexture });
         const earth = new THREE.Mesh(earthGeo, earthMat);
+        earth.castShadow = true;
+        earth.receiveShadow = true;
         scene.add(earth);
 
          //JANGAN DIUBAH
@@ -70,6 +120,8 @@
         const moonTexture = textureLoader.load('./texture/bulan.jpg');
         const moonMat = new THREE.MeshStandardMaterial({ map: moonTexture });
         const moon = new THREE.Mesh(moonGeo, moonMat);
+        moon.castShadow = true;
+        moon.receiveShadow = true;
         earth.add(moon); // Anak dari Bumi
         moon.position.x = 4; // Jarak bulan dari bumi
 
@@ -111,6 +163,8 @@
                 metalness: 0.1
             });
             const planet = new THREE.Mesh(geometry, material);
+            planet.castShadow = true;
+            planet.receiveShadow = true;
             
             // Buat Garis Orbit (Visualisasi jalur)
             const orbitGeo = new THREE.RingGeometry(data.distance - 0.1, data.distance + 0.1, 64);
@@ -136,6 +190,8 @@
                 const ring = new THREE.Mesh(ringGeo, ringMat);
                 ring.rotation.x = -Math.PI / 2;
                 ring.rotation.y = -Math.PI / 12;
+                ring.castShadow = true;
+                ring.receiveShadow = true;
                 planet.add(ring);
             }
 
@@ -159,14 +215,17 @@
             requestAnimationFrame(animate);
             
             const time = Date.now() * 0.001; // Waktu dalam detik
+            const revMultiplier = parseFloat(revolutionSpeedInput.value);
+            const rotMultiplier = parseFloat(rotationSpeedInput.value);
 
             // Rotasi Matahari
-            sun.rotation.y += 0.005;
+            sun.rotation.y += 0.005 * rotMultiplier;
 
             // Orbit Bumi
-            earth.position.x = Math.cos(time) * 20;
-            earth.position.z = Math.sin(time) * 20;
-            earth.rotation.y += 0.02;
+            const earthAngle = time * revMultiplier;
+            earth.position.x = Math.cos(earthAngle) * 20;
+            earth.position.z = Math.sin(earthAngle) * 20;
+            earth.rotation.y += 0.02 * rotMultiplier;
 
             controls.update();
             renderer.render(scene, camera);
@@ -174,13 +233,13 @@
             // Animasi Planet Tambahan
             otherPlanets.forEach(planet => {
                 const speedFactor = 0.2;
-                const angle = (time * planet.orbitSpeed * speedFactor) + planet.angleOffset;
+                const angle = (time * planet.orbitSpeed * speedFactor * revMultiplier) + planet.angleOffset;
                 
                 planet.position.x = Math.cos(angle) * planet.orbitDistance;
                 planet.position.z = Math.sin(angle) * planet.orbitDistance;
                 
                 // Rotasi planet pada porosnya
-                planet.rotation.y += 0.01;
+                planet.rotation.y += 0.01 * rotMultiplier;
             });
         }
 
