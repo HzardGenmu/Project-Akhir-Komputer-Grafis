@@ -88,29 +88,31 @@
 
         // Data Planet (Bumi dihapus dari list ini karena sudah ada di atas)
         const planetData = [
-            { name: "Mercury", color: 0xA5A5A5, size: 0.8, distance: 10, speed: 4.7 },
-            { name: "Venus",   color: 0xE1C16E, size: 1.5, distance: 15, speed: 3.5 },
-            // Earth skipped
-            { name: "Mars",    color: 0xFF4500, size: 0.9, distance: 30, speed: 2.4 },
-            { name: "Jupiter", color: 0xD2B48C, size: 4.0, distance: 45, speed: 1.3 },
-            { name: "Saturn",  color: 0xF4C542, size: 3.5, distance: 65, speed: 0.9, hasRing: true }, // Jarak disesuaikan agar tidak numpuk
-            { name: "Uranus",  color: 0x40E0D0, size: 2.5, distance: 85, speed: 0.6 },
-            { name: "Neptune", color: 0x4169E1, size: 2.4, distance: 100, speed: 0.5 }
+            { name: "Mercury", texture: './texture/mercury.jpg', size: 0.8, distance: 10, speed: 4.7 },
+            { name: "Venus",   texture: './texture/venus.jpg',   size: 1.5, distance: 15, speed: 3.5 },
+            { name: "Mars",    texture: './texture/mars.jpg',    size: 0.9, distance: 30, speed: 2.4 },
+            { name: "Jupiter", texture: './texture/jupiter.jpg', size: 4.0, distance: 45, speed: 1.3 },
+            { name: "Saturn",  texture: './texture/saturn.jpg',  size: 3.5, distance: 65, speed: 0.9, hasRing: true },
+            { name: "Uranus",  texture: './texture/uranus.jpg',  size: 2.5, distance: 85, speed: 0.6 },
+            { name: "Neptune", texture: './texture/neptune.jpg', size: 2.4, distance: 100, speed: 0.5 }
         ];
 
         const otherPlanets = [];
 
         planetData.forEach((data) => {
-            // 1. Buat Mesh Planet (Kosongan / Warna Saja)
+
+            const planetTexture = textureLoader.load(data.texture);
+
+            // Buat Mesh Planet dengan Texture
             const geometry = new THREE.SphereGeometry(data.size, 32, 32);
             const material = new THREE.MeshStandardMaterial({ 
-                color: data.color,
+                map: planetTexture,
                 roughness: 0.7,
                 metalness: 0.1
             });
             const planet = new THREE.Mesh(geometry, material);
             
-            // 2. Buat Garis Orbit (Visualisasi jalur)
+            // Buat Garis Orbit (Visualisasi jalur)
             const orbitGeo = new THREE.RingGeometry(data.distance - 0.1, data.distance + 0.1, 64);
             const orbitMat = new THREE.MeshBasicMaterial({ 
                 color: 0xffffff, 
@@ -122,7 +124,7 @@
             orbit.rotation.x = -Math.PI / 2;
             scene.add(orbit);
 
-            // 3. Khusus Saturnus: Tambah Cincin
+            // Khusus Saturnus: Tambah Cincin 
             if (data.hasRing) {
                 const ringGeo = new THREE.RingGeometry(data.size + 1, data.size + 3.5, 64);
                 const ringMat = new THREE.MeshStandardMaterial({ 
@@ -138,15 +140,16 @@
             }
 
             scene.add(planet);
-            // Posisi awal acak di orbit
+
+            // Posisi awal acak
             const initialAngle = Math.random() * Math.PI * 2; 
             planet.position.x = Math.cos(initialAngle) * data.distance;
             planet.position.z = Math.sin(initialAngle) * data.distance;
 
-            // Simpan data ke object planet untuk animasi
+            // Simpan data
             planet.orbitDistance = data.distance;
             planet.orbitSpeed = data.speed;
-            planet.angleOffset = initialAngle
+            planet.angleOffset = initialAngle;
 
             otherPlanets.push(planet);
         });
