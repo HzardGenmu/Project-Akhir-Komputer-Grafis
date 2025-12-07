@@ -161,6 +161,52 @@
         }
         #game-btn:hover { transform: scale(1.05); }
 
+        /* Planet Hover Tooltip */
+        #planet-tooltip {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
+            padding: 15px 25px;
+            border-radius: 15px;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            animation: tooltipPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes tooltipPulse {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        #planet-tooltip .tooltip-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        
+        #planet-tooltip .tooltip-cta {
+            font-size: 0.9rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #planet-tooltip .tooltip-icon {
+            font-size: 1.2rem;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
         /* 2. Modal Pertanyaan */
         #quiz-modal {
             display: none; position: absolute;
@@ -229,6 +275,15 @@
     </div>
 
     <button id="game-btn">❌ Akhiri Game</button>
+
+    <!-- Planet Hover Tooltip -->
+    <div id="planet-tooltip">
+        <div class="tooltip-title" id="tooltip-planet-name">Planet</div>
+        <div class="tooltip-cta">
+            <span class="tooltip-icon">👆</span>
+            <span>Klik untuk mempelajari lebih lanjut!</span>
+        </div>
+    </div>
 
     <div id="quiz-modal">
         <h2>Tebak Planet!</h2>
@@ -359,6 +414,8 @@
         const rotSpeedInput = document.getElementById('rotationSpeed');
         const lightInput = document.getElementById('lightIntensity');
         const quizModal = document.getElementById('quiz-modal');
+        const planetTooltip = document.getElementById('planet-tooltip');
+        const tooltipPlanetName = document.getElementById('tooltip-planet-name');
 
         gameBtn.addEventListener('click', () => {
             isGameActive = false;
@@ -376,7 +433,18 @@
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(planetsMeshList);
-            document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
+            
+            if (intersects.length > 0) {
+                document.body.style.cursor = 'pointer';
+                const hoveredPlanet = intersects[0].object;
+                tooltipPlanetName.textContent = hoveredPlanet.userData.name;
+                planetTooltip.style.display = 'block';
+                planetTooltip.style.left = (event.clientX + 20) + 'px';
+                planetTooltip.style.top = (event.clientY - 40) + 'px';
+            } else {
+                document.body.style.cursor = 'default';
+                planetTooltip.style.display = 'none';
+            }
         });
 
         window.addEventListener('click', (event) => {
@@ -390,6 +458,7 @@
                 const clickedPlanet = intersects[0].object;
                 focusTarget = clickedPlanet;
                 isTransitioning = true;
+                planetTooltip.style.display = 'none'; // Sembunyikan tooltip saat diklik
                 showQuiz(clickedPlanet.userData);
             }
         });
